@@ -80,7 +80,8 @@ class WheelWidget(tk.Canvas):
             slice_angle = (entry['weight'] / total_weight) * 360
             end_angle = current_angle + slice_angle
             
-            color = self.colors[i % len(self.colors)]
+            # Use entry color if specified, otherwise use default palette
+            color = entry.get('color') or self.colors[i % len(self.colors)]
             
             # Draw slice (PIL angles are clockwise from 3 o'clock)
             draw.pieslice([cx - r, cy - r, cx + r, cy + r], 
@@ -221,7 +222,7 @@ class WheelWidget(tk.Canvas):
             
         return self.entries[-1]
 
-    def show_overlay(self, winner_label):
+    def show_notification(self, title, message, color="#3B8ED0"):
         self.delete("overlay")
         
         # Card dimensions
@@ -232,31 +233,31 @@ class WheelWidget(tk.Canvas):
         draw = ImageDraw.Draw(img)
         
         # Draw rounded rect
-        # Fill: #333333 (gray20), Outline: #3B8ED0, Width: 2
-        draw.rounded_rectangle([0, 0, card_w-1, card_h-1], radius=20, fill="#333333", outline="#3B8ED0", width=3)
+        draw.rounded_rectangle([0, 0, card_w-1, card_h-1], radius=20, fill="#333333", outline=color, width=3)
         
         # Fonts
         try:
-            font_title = ImageFont.truetype("arial.ttf", 20)
-            font_name = ImageFont.truetype("arial.ttf", 26)
+            font_title = ImageFont.truetype("arial.ttf", 24)
+            # Adjust font size based on message length
+            msg_len = len(message)
+            if msg_len < 10:
+                font_size = 32
+            elif msg_len < 20:
+                font_size = 24
+            else:
+                font_size = 16
+            font_msg = ImageFont.truetype("arial.ttf", font_size)
             font_small = ImageFont.truetype("arial.ttf", 12)
         except IOError:
             font_title = ImageFont.load_default()
-            font_name = ImageFont.load_default()
+            font_msg = ImageFont.load_default()
             font_small = ImageFont.load_default()
             
         # Draw Title
-        draw.text((card_w/2, 20), "WINNER!", font=font_title, fill="#3B8ED0", anchor="mm")
+        draw.text((card_w/2, 20), title, font=font_title, fill=color, anchor="mm")
         
-        # Draw Name (Truncate if needed)
-        text = winner_label
-        max_width = card_w - 40
-        while font_name.getlength(text) > max_width and len(text) > 0:
-            text = text[:-1]
-        if len(text) < len(winner_label):
-            text = text[:-3] + "..."
-            
-        draw.text((card_w/2, 60), text, font=font_name, fill="white", anchor="mm")
+        # Draw Message
+        draw.multiline_text((card_w/2, 60), message, font=font_msg, fill="white", anchor="mm", align="center")
         
         # Draw Dismiss
         draw.text((card_w/2, 100), "(Click to dismiss)", font=font_small, fill="#AAAAAA", anchor="mm")

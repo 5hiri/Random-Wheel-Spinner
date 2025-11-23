@@ -5,6 +5,7 @@ import shutil
 
 APP_NAME = "RandomWheelSpinner"
 APP_AUTHOR = "User"
+AUTOSAVE_NAME = "_autosave"
 
 def get_data_dir():
     data_dir = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
@@ -13,6 +14,8 @@ def get_data_dir():
     return data_dir
 
 def get_config_path(name):
+    if name == AUTOSAVE_NAME:
+        return os.path.join(get_data_dir(), f"{AUTOSAVE_NAME}.json")
     safe_name = "".join([c for c in name if c.isalpha() or c.isdigit() or c in (' ', '-', '_')]).strip()
     return os.path.join(get_data_dir(), f"{safe_name}.json")
 
@@ -35,11 +38,20 @@ def load_config(name):
     with open(path, 'r') as f:
         return json.load(f)
 
+def save_autosave(entries):
+    save_config(AUTOSAVE_NAME, entries)
+
+def load_autosave():
+    data = load_config(AUTOSAVE_NAME)
+    if data:
+        return data.get('entries', [])
+    return []
+
 def list_configs():
     data_dir = get_data_dir()
     configs = []
     for filename in os.listdir(data_dir):
-        if filename.endswith(".json"):
+        if filename.endswith(".json") and filename != f"{AUTOSAVE_NAME}.json":
             # We could read the file to get the real name, or just use the filename
             # Let's try to read the 'name' field from json, fallback to filename
             try:
